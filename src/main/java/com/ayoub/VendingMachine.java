@@ -54,9 +54,32 @@ public class VendingMachine {
         coinStock.put(coin, coinStock.getOrDefault(coin, 0) + quantity);
     }
 
-    public List<Coin> provideChange(double amount) {
+
+    // Purchase Flow
+    public List<Coin> purchaseProduct(int productId) {
+        Product p = getProduct(productId);
+        if (p == null) throw new IllegalArgumentException("Invalid product");
+
+        int currentQty = productQuantities.getOrDefault(productId, 0);
+        if (currentQty <= 0) throw new IllegalStateException("Out of stock");
+
+        double price = p.getPrice();
+        double paid = totalCoinInserted();
+        if (paid < price) throw new IllegalStateException("Insufficient funds");
+
+        // Add inserted coins to machine stock
+        for (Coin c : insertedCoins) {
+            coinStock.put(c, coinStock.getOrDefault(c, 0) + 1);
+        }
+
+        // Update product inventory
+        productQuantities.put(productId, currentQty - 1);
+
+        // Compute change and deduct coins from machine
+        double changeAmount = paid - price;
         List<Coin> change = new ArrayList<>();
-        int remaining = (int) Math.round(amount * 100);
+        int remaining = (int) Math.round(changeAmount * 100);
+
         for (Coin c : Coin.sortedDescending()) {
             int coinValue = (int) Math.round(c.getValue() * 100);
             int available = coinStock.getOrDefault(c, 0);
@@ -67,32 +90,12 @@ public class VendingMachine {
             }
             coinStock.put(c, available);
         }
+
         if (remaining != 0) throw new IllegalStateException("Cannot provide exact change");
-        return change;
-    }
 
-    // Purchase Flow
-    public List<Coin> purchaseProduct(int productId) {
-        Product p = getProduct(productId);
-        if (p == null) throw new IllegalArgumentException("Invalid product");
-        double price = p.getPrice();
-        double paid = totalCoinInserted();
-        if (paid < price) throw new IllegalStateException("Insufficient funds");
-
-        // 1) Add inserted coins to machine stock
-        for (Coin c : insertedCoins) {
-            coinStock.put(c, coinStock.getOrDefault(c, 0) + 1);
-        }
-
-        // 2) Dispense product
-        reduceProduct(productId);
-
-        // 3) provide change
-        double changeAmount = paid - price;
-        List<Coin> change = provideChange(changeAmount);
-
-        // 4) Clear inserted coins for next customer
         insertedCoins.clear();
         return change;
     }
+
+    
 }
