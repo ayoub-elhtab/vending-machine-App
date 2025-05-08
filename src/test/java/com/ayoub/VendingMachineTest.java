@@ -110,7 +110,7 @@ public class VendingMachineTest {
         double total = underTest.totalCoinInserted();
         assertEquals(0.0, total);
     }
-    
+
 
 
 }
