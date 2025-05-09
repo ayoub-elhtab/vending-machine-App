@@ -50,6 +50,12 @@ public class VendingMachine {
         return insertedCoins.stream().mapToDouble(Coin::getValue).sum();
     }
 
+    public double totalCoinsInTheMachine() {
+        return coinStock.entrySet().stream()
+                .mapToDouble(e -> e.getKey().getValue() * e.getValue())
+                .sum();
+    }
+
     public void refillCoins(Coin coin, int quantity) {
         coinStock.put(coin, coinStock.getOrDefault(coin, 0) + quantity);
     }
@@ -73,7 +79,7 @@ public class VendingMachine {
         }
 
         // Update product inventory
-        productQuantities.put(productId, currentQty - 1);
+        reduceProduct(productId);
 
         // Compute change and deduct coins from machine
         double changeAmount = paid - price;
